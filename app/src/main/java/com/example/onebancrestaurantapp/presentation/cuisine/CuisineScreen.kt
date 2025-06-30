@@ -28,41 +28,40 @@ import kotlinx.coroutines.withContext
 fun CuisineScreen(cuisineId: String, navController: NavController) {
     var cuisine by remember { mutableStateOf<Cuisine?>(null) }
     val quantities = remember { mutableStateMapOf<String, Int>() }
-
     LaunchedEffect(cuisineId) {
-        cuisine = withContext(Dispatchers.IO) {
-            val api = ApiService()
-            val cuisines = api.getItemList(1, 10)
-            cuisines.find { it.cuisineId == cuisineId }
+        cuisine=withContext(Dispatchers.IO) {
+            val api=ApiService()
+            val cuisines =api.getItemList(1, 10)
+            cuisines.find{ it.cuisineId == cuisineId }
         }
     }
 
     cuisine?.let { selectedCuisine ->
         val totalQuantity = quantities.values.sum()
 
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(modifier=Modifier.fillMaxSize()) {
             Column(
-                modifier = Modifier
+                modifier=Modifier
                     .fillMaxSize()
                     .padding(16.dp)
-                    .padding(bottom = if (totalQuantity > 0) 64.dp else 0.dp)
+                    .padding(bottom =if (totalQuantity > 0) 64.dp else 0.dp)
             ) {
                 Text(
-                    text = selectedCuisine.cuisineName,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
+                    text=selectedCuisine.cuisineName,
+                    style=MaterialTheme.typography.headlineSmall,
+                    fontWeight=FontWeight.Bold
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier=Modifier.height(12.dp))
 
-                LazyColumn {
+                LazyColumn{
                     items(selectedCuisine.items) { dish ->
-                        DishQuantityCard(dish, quantities[dish.id] ?: 0) { change ->
-                            val current = quantities[dish.id] ?: 0
-                            val updated = (current + change).coerceAtLeast(0)
-                            quantities[dish.id] = updated
+                        DishQuantityCard(dish,quantities[dish.id] ?: 0) { change ->
+                            val current=quantities[dish.id] ?: 0
+                            val updated=(current + change).coerceAtLeast(0)
+                            quantities[dish.id]=updated
 
-                            if (updated > 0) {
+                            if (updated>0) {
                                 CartManager.addItem(
                                     CartItem(
                                         cuisineId = selectedCuisine.cuisineId,
@@ -73,75 +72,71 @@ fun CuisineScreen(cuisineId: String, navController: NavController) {
                                         imageUrl = dish.imageUrl
                                     )
                                 )
-                            } else {
+                            }else{
                                 CartManager.removeItem(dish.id)
                             }
                         }
                     }
                 }
             }
-
-            if (totalQuantity > 0) {
+            if (totalQuantity>0) {
                 Button(
-                    onClick = { navController.navigate(Screen.Cart.route) },
-                    modifier = Modifier
+                    onClick={ navController.navigate(Screen.Cart.route) },
+                    modifier=Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
                         .padding(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF009688))
                 ) {
-                    Text("Go to Cart", color = Color.White)
+                    Text("Go to Cart",color=Color.White)
                 }
             }
         }
-    } ?: Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    }?:Box(modifier = Modifier.fillMaxSize(),contentAlignment = Alignment.Center) {
         CircularProgressIndicator()
     }
 }
-
 @Composable
-fun DishQuantityCard(dish: Dish, quantity: Int, onQuantityChange: (Int) -> Unit) {
+fun DishQuantityCard(dish: Dish,quantity:Int,onQuantityChange:(Int) -> Unit) {
     Card(
-        modifier = Modifier
+        modifier=Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(4.dp)
+        shape=RoundedCornerShape(12.dp),
+        elevation=CardDefaults.cardElevation(4.dp)
     ) {
-        Row(modifier = Modifier.padding(12.dp)) {
-            val painter = rememberImagePainter(dish.imageUrl)
+        Row(modifier=Modifier.padding(12.dp)) {
+            val painter=rememberImagePainter(dish.imageUrl)
 
-            if (painter != null) {
+            if (painter!=null) {
                 Image(
-                    painter = painter,
-                    contentDescription = dish.name,
-                    modifier = Modifier
+                    painter=painter,
+                    contentDescription=dish.name,
+                    modifier=Modifier
                         .size(80.dp)
                         .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop
+                    contentScale=ContentScale.Crop
                 )
             }
+            Spacer(modifier=Modifier.width(12.dp))
 
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = dish.name, fontWeight = FontWeight.SemiBold)
-                Text(text = "₹${dish.price}", color = Color.Gray)
-                Text(text = "⭐ ${dish.rating}")
+            Column(modifier=Modifier.weight(1f)) {
+                Text(text=dish.name,fontWeight=FontWeight.SemiBold)
+                Text(text="₹${dish.price}",color=Color.Gray)
+                Text(text="⭐ ${dish.rating}")
             }
-
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.End
+                verticalAlignment=Alignment.CenterVertically,
+                horizontalArrangement=Arrangement.End
             ) {
-                Button(onClick = { onQuantityChange(-1) }, enabled = quantity > 0) {
+                Button(onClick={onQuantityChange(-1)},enabled=quantity>0) {
                     Text("-")
                 }
                 Text(
-                    text = quantity.toString(),
-                    modifier = Modifier.padding(horizontal = 8.dp)
+                    text=quantity.toString(),
+                    modifier=Modifier.padding(horizontal=8.dp)
                 )
-                Button(onClick = { onQuantityChange(1) }) {
+                Button(onClick={onQuantityChange(1) }) {
                     Text("+")
                 }
             }

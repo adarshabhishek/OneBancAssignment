@@ -11,26 +11,26 @@ import kotlinx.coroutines.launch
 
 class HomeViewModel : ViewModel() {
 
-    private val apiService = ApiService()
+    private val apiService=ApiService()
 
     private val _cuisines = MutableStateFlow<List<Cuisine>>(emptyList())
-    val cuisines: StateFlow<List<Cuisine>> = _cuisines
+    val cuisines:StateFlow<List<Cuisine>> =_cuisines
 
     private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
+    val isLoading:StateFlow<Boolean> = _isLoading
 
-    init {
+    init{
         fetchCuisines()
     }
 
     private fun fetchCuisines() {
         viewModelScope.launch(Dispatchers.IO) {
-            _isLoading.value = true
+            _isLoading.value=true
             try {
-                _cuisines.value = apiService.getItemList(page = 1, count = 10)
-            } catch (e: Exception) {
+                _cuisines.value=apiService.getItemList(page = 1, count = 10)
+            } catch (e:Exception) {
                 e.printStackTrace()
-            } finally {
+            } finally{
                 _isLoading.value = false
             }
         }

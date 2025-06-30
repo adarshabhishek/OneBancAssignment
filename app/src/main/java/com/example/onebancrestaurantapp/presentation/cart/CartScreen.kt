@@ -32,50 +32,47 @@ fun CartScreen(navController: NavController) {
         items.clear()
         items.addAll(CartManager.getItems())
     }
-
-    val context = LocalContext.current
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
-
-    val netTotal = items.sumOf { it.price * it.quantity }
-    val cgst = netTotal * 0.025
-    val sgst = netTotal * 0.025
-    val grandTotal = netTotal + cgst + sgst
+    val context=LocalContext.current
+    val snackbarHostState=remember { SnackbarHostState() }
+    val scope=rememberCoroutineScope()
+    val netTotal=items.sumOf {it.price*it.quantity }
+    val cgst=netTotal*0.025
+    val sgst=netTotal*0.025
+    val grandTotal=netTotal+cgst + sgst
 
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-    ) { paddingValues ->
-
+        snackbarHost={SnackbarHost(hostState = snackbarHostState)}
+    ) { paddingValues->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
-            Text("Your Cart", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(16.dp))
+            Text("Your Cart",style=MaterialTheme.typography.headlineSmall,fontWeight= FontWeight.Bold)
+            Spacer(modifier=Modifier.height(16.dp))
 
             if (items.isEmpty()) {
                 Box(
-                    modifier = Modifier
+                    modifier=Modifier
                         .fillMaxWidth()
                         .weight(1f),
-                    contentAlignment = Alignment.Center
+                    contentAlignment=Alignment.Center
                 ) {
-                    Text("🛒 Cart is empty", style = MaterialTheme.typography.bodyLarge)
+                    Text("🛒 Cart is empty",style=MaterialTheme.typography.bodyLarge)
                 }
-            } else {
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(items.size) { index ->
+            } else{
+                LazyColumn(modifier=Modifier.weight(1f)) {
+                    items(items.size){ index ->
                         CartItemRow(
-                            item = items[index],
-                            onQuantityChange = { newQty ->
+                            item=items[index],
+                            onQuantityChange={newQty ->
                                 val currentItem = items[index]
-                                if (newQty > 0) {
-                                    val updated = currentItem.copy(quantity = newQty)
-                                    items[index] = updated
+                                if(newQty>0){
+                                    val updated=currentItem.copy(quantity = newQty)
+                                    items[index]=updated
                                     CartManager.updateItem(updated)
-                                } else {
+                                } else{
                                     items.removeAt(index)
                                     CartManager.removeItem(currentItem.itemId)
                                 }
@@ -83,40 +80,34 @@ fun CartScreen(navController: NavController) {
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-                Divider()
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier=Modifier.height(16.dp))
+                HorizontalDivider()
+                Spacer(modifier=Modifier.height(8.dp))
 
                 Text("Subtotal: ₹$netTotal")
                 Text("CGST (2.5%): ₹${cgst.toInt()}")
                 Text("SGST (2.5%): ₹${sgst.toInt()}")
-                Text("Grand Total: ₹${grandTotal.toInt()}", fontWeight = FontWeight.Bold)
-
+                Text("Grand Total: ₹${grandTotal.toInt()}",fontWeight=FontWeight.Bold)
                 Spacer(modifier = Modifier.height(24.dp))
-
                 Button(
-                    onClick = {
+                    onClick= {
                         scope.launch {
-                            if (items.isEmpty()) {
+                            if(items.isEmpty()) {
                                 snackbarHostState.showSnackbar("🛒 Your cart is empty")
                                 return@launch
                             }
-
-                            // Simulated success
                             val api = ApiService()
                             val ref = api.makePayment(
                                 totalItems = items.sumOf { it.quantity },
                                 cartItems = items
                             )
-
                             if (ref != null) {
                                 Toast.makeText(context, "✅ Order placed successfully", Toast.LENGTH_SHORT).show()
                                 CartManager.clear()
                                 items.clear()
                                 showBackHome = true
                             } else {
-                                snackbarHostState.showSnackbar("❌ Failed to place order")
+                                snackbarHostState.showSnackbar("Failed to place order")
                             }
                         }
                     },
@@ -126,72 +117,67 @@ fun CartScreen(navController: NavController) {
                     Text("Place Order", color = Color.White)
                 }
             }
-
-            // ✅ Show Back to Home button even when cart is empty
             if (showBackHome) {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier=Modifier.height(16.dp))
                 Button(
-                    onClick = { navController.navigate(Screen.Home.route) },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF009688))
+                    onClick={navController.navigate(Screen.Home.route) },
+                    modifier=Modifier.fillMaxWidth(),
+                    colors=ButtonDefaults.buttonColors(containerColor=Color(0xFF009688))
                 ) {
-                    Text("🏠 Go to Home Screen", color = Color.White)
+                    Text("🏠 Go to Home Screen",color=Color.White)
                 }
             }
         }
     }
 }
-
 @Composable
-fun CartItemRow(item: CartItem, onQuantityChange: (Int) -> Unit) {
+fun CartItemRow(item:CartItem,onQuantityChange:(Int)->Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
-        shape = RoundedCornerShape(12.dp),
+        shape=RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Row(modifier = Modifier.padding(12.dp)) {
-            val painter = rememberImagePainter(item.imageUrl)
+            val painter=rememberImagePainter(item.imageUrl)
 
-            if (painter != null) {
+            if (painter!=null) {
                 Image(
-                    painter = painter,
+                    painter=painter,
                     contentDescription = item.name,
-                    modifier = Modifier
+                    modifier=Modifier
                         .size(80.dp)
                         .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop
+                    contentScale=ContentScale.Crop
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier=Modifier.width(12.dp))
 
-            Column(modifier = Modifier.weight(1f)) {
-                Text(item.name, fontWeight = FontWeight.Bold)
-                Text("₹${item.price} × ${item.quantity}", color = Color.Gray)
-                Text("Total: ₹${item.price * item.quantity}", fontWeight = FontWeight.Medium)
+            Column(modifier=Modifier.weight(1f)) {
+                Text(item.name,fontWeight = FontWeight.Bold)
+                Text("₹${item.price}×${item.quantity}",color=Color.Gray)
+                Text("Total: ₹${item.price * item.quantity}",fontWeight = FontWeight.Medium)
             }
 
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.End
+                verticalAlignment=Alignment.CenterVertically,
+                horizontalArrangement= Arrangement.End
             ) {
                 Button(
-                    onClick = { onQuantityChange(item.quantity - 1) },
-                    enabled = item.quantity > 0,
-                    contentPadding = PaddingValues(horizontal = 8.dp)
+                    onClick = {onQuantityChange(item.quantity - 1) },
+                    enabled =item.quantity > 0,
+                    contentPadding= PaddingValues(horizontal = 8.dp)
                 ) {
                     Text("-")
                 }
-
                 Text(
-                    text = item.quantity.toString(),
-                    modifier = Modifier.padding(horizontal = 8.dp)
+                    text =item.quantity.toString(),
+                    modifier=Modifier.padding(horizontal = 8.dp)
                 )
-
                 Button(
-                    onClick = { onQuantityChange(item.quantity + 1) },
+                    onClick ={onQuantityChange(item.quantity + 1) },
                     contentPadding = PaddingValues(horizontal = 8.dp)
                 ) {
                     Text("+")

@@ -36,78 +36,67 @@ fun HomeScreen(
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.padding(16.dp)) {
-
-            // Language Toggle
             Button(
-                onClick = {
-                    val locale = if (isEnglish) Locale("hi") else Locale("en")
+                onClick={
+                    val locale =if(isEnglish) Locale("hi") else Locale("en")
                     Locale.setDefault(locale)
                     configuration.setLocale(locale)
                     context.createConfigurationContext(configuration)
-                    isEnglish = !isEnglish
+                    isEnglish=!isEnglish
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF673AB7)),
-                modifier = Modifier.fillMaxWidth()
+                colors=ButtonDefaults.buttonColors(containerColor = Color(0xFF673AB7)),
+                modifier=Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = if (isEnglish) "Switch to Hindi" else "अंग्रेज़ी में बदलें",
-                    color = Color.White
+                    text = if(isEnglish) "Switch to Hindi" else "अंग्रेज़ी में बदलें",
+                    color=Color.White
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier= Modifier.height(12.dp))
 
             Text(
-                text = stringResource(R.string.cuisine_categories),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                text=stringResource(R.string.cuisine_categories),
+                style=MaterialTheme.typography.titleLarge,
+                fontWeight=FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Cuisine Cards - Horizontal Scroll
+            Spacer(modifier =Modifier.height(8.dp))
             LazyRow {
                 items(cuisines) { cuisine ->
-                    CuisineCard(cuisine = cuisine) {
+                    CuisineCard(cuisine=cuisine) {
                         navController.navigate(Screen.Cuisine.createRoute(cuisine.cuisineId))
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
+            Spacer(modifier=Modifier.height(16.dp))
             Text(
-                text = stringResource(R.string.top_dishes),
-                style = MaterialTheme.typography.titleMedium,
+                text=stringResource(R.string.top_dishes),
+                style=MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Top 3 Dishes - From All Cuisines
+            Spacer(modifier=Modifier.height(8.dp))
             LazyColumn {
-                items(cuisines.take(1).flatMap { it.items.take(3) }) { dish ->
+                items(cuisines.take(1).flatMap {it.items.take(3) }) { dish ->
                     DishCard(dish)
                 }
             }
             Spacer(modifier = Modifier.height(24.dp))
-
             Button(
-                onClick = { navController.navigate(Screen.Cart.route) },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF009688))
+                onClick= { navController.navigate(Screen.Cart.route) },
+                modifier= Modifier.fillMaxWidth(),
+                colors=ButtonDefaults.buttonColors(containerColor = Color(0xFF009688))
             ) {
-                Text("Go to Cart", color = Color.White)
+                Text("Go to Cart",color =Color.White)
             }
 
         }
     }
 }
-
 @Composable
 fun CuisineCard(cuisine: Cuisine, onClick: () -> Unit) {
     Card(
-        modifier = Modifier
+        modifier =Modifier
             .padding(end = 12.dp)
             .width(180.dp)
             .height(120.dp)
@@ -116,61 +105,60 @@ fun CuisineCard(cuisine: Cuisine, onClick: () -> Unit) {
         elevation = CardDefaults.cardElevation(6.dp)
     ) {
         val painter = rememberImagePainter(cuisine.cuisineImageUrl)
-
         Box {
-            if (painter != null) {
+            if (painter!=null) {
                 Image(
-                    painter = painter,
-                    contentDescription = cuisine.cuisineName,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+                    painter=painter,
+                    contentDescription=cuisine.cuisineName,
+                    modifier=Modifier.fillMaxSize(),
+                    contentScale =ContentScale.Crop
                 )
             }
             Box(
-                modifier = Modifier
+                modifier=Modifier
                     .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.3f))
             )
             Text(
-                text = cuisine.cuisineName,
-                color = Color.White,
-                modifier = Modifier
+                text=cuisine.cuisineName,
+                color=Color.White,
+                modifier=Modifier
                     .align(Alignment.BottomStart)
                     .padding(8.dp),
-                fontWeight = FontWeight.Bold
+                fontWeight=FontWeight.Bold
             )
         }
     }
 }
 
 @Composable
-fun DishCard(dish: Dish) {
+fun DishCard(dish:Dish) {
     Card(
-        modifier = Modifier
+        modifier=Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(4.dp)
+        shape=RoundedCornerShape(12.dp),
+        elevation=CardDefaults.cardElevation(4.dp)
     ) {
-        Row(modifier = Modifier.padding(8.dp)) {
-            val painter = rememberImagePainter(dish.imageUrl)
+        Row(modifier=Modifier.padding(8.dp)) {
+            val painter=rememberImagePainter(dish.imageUrl)
 
-            if (painter != null) {
+            if (painter!=null) {
                 Image(
-                    painter = painter,
+                    painter=painter,
                     contentDescription = dish.name,
-                    modifier = Modifier
+                    modifier=Modifier
                         .size(80.dp)
                         .clip(RoundedCornerShape(10.dp)),
-                    contentScale = ContentScale.Crop
+                    contentScale=ContentScale.Crop
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier=Modifier.width(12.dp))
             Column {
-                Text(text = dish.name, fontWeight = FontWeight.Bold)
-                Text(text = "₹${dish.price}", color = Color.Gray)
-                Text(text = "⭐ ${dish.rating}")
+                Text(text=dish.name, fontWeight = FontWeight.Bold)
+                Text(text="₹${dish.price}", color = Color.Gray)
+                Text(text= "⭐ ${dish.rating}")
             }
         }
     }

@@ -5,8 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 private val LightColorScheme = lightColorScheme(
-    primary = PrimaryPurple,
-    secondary = AccentTeal,
+    primary =PrimaryPurple,
+    secondary= AccentTeal,
     background = BackgroundLight,
     surface = Color.White,
     onPrimary = TextLight,
@@ -14,14 +14,13 @@ private val LightColorScheme = lightColorScheme(
     onBackground = TextDark,
     onSurface = TextDark
 )
-
 @Composable
 fun OneBancRestaurantAppTheme(
-    content: @Composable () -> Unit
+    content:@Composable () -> Unit
 ) {
     MaterialTheme(
-        colorScheme = LightColorScheme,
-        typography = Typography,
-        content = content
+        colorScheme= LightColorScheme,
+        typography=Typography,
+        content=content
     )
 }
