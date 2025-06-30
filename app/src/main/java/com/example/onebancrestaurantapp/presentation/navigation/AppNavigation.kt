@@ -31,7 +31,8 @@ fun AppNavigation(navController: NavHostController, homeViewModel: HomeViewModel
             arguments = listOf(navArgument("cuisineId") { type = NavType.StringType })
         ) { backStackEntry ->
             val cuisineId = backStackEntry.arguments?.getString("cuisineId") ?: ""
-            CuisineScreen(cuisineId = cuisineId)
+            CuisineScreen(cuisineId = cuisineId, navController = navController)
+
         }
         composable(Screen.Cart.route) {
             CartScreen()

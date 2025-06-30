@@ -16,6 +16,7 @@ import com.example.onebancrestaurantapp.data.model.CartItem
 import com.example.onebancrestaurantapp.data.remote.ApiService
 import com.example.onebancrestaurantapp.utils.CartManager
 import com.example.onebancrestaurantapp.utils.rememberImagePainter
+import kotlinx.coroutines.launch
 
 @Composable
 fun CartScreen() {
@@ -31,66 +32,61 @@ fun CartScreen() {
     val sgst = netTotal * 0.025
     val grandTotal = netTotal + cgst + sgst
 
-    var showSuccess by remember { mutableStateOf(false) }
-    var txnRef by remember { mutableStateOf("") }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp)) {
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+    ) { paddingValues ->
 
-        Text("Your Cart", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(16.dp))
-
-        LazyColumn(modifier = Modifier.weight(1f)) {
-            items(items.size) { index ->
-                CartItemRow(item = items[index])
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Divider()
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text("Subtotal: ₹$netTotal")
-        Text("CGST (2.5%): ₹${cgst.toInt()}")
-        Text("SGST (2.5%): ₹${sgst.toInt()}")
-        Text("Grand Total: ₹${grandTotal.toInt()}", fontWeight = FontWeight.Bold)
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Button(
-            onClick = {
-                val api = ApiService()
-                val ref = api.makePayment(
-                    totalAmount = grandTotal.toInt(),
-                    totalItems = items.sumOf { it.quantity },
-                    cartItems = items
-                )
-                if (ref != null) {
-                    txnRef = ref
-                    showSuccess = true
-                    CartManager.clear()
-                    items.clear()
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
         ) {
-            Text("Place Order", color = Color.White)
-        }
+            Text("Your Cart", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(16.dp))
 
-        if (showSuccess) {
-            AlertDialog(
-                onDismissRequest = { showSuccess = false },
-                title = { Text("Order Placed!") },
-                text = { Text("Transaction Reference: $txnRef") },
-                confirmButton = {
-                    TextButton(onClick = { showSuccess = false }) {
-                        Text("OK")
-                    }
+            LazyColumn(modifier = Modifier.weight(1f)) {
+                items(items.size) { index ->
+                    CartItemRow(item = items[index])
                 }
-            )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            Divider()
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text("Subtotal: ₹$netTotal")
+            Text("CGST (2.5%): ₹${cgst.toInt()}")
+            Text("SGST (2.5%): ₹${sgst.toInt()}")
+            Text("Grand Total: ₹${grandTotal.toInt()}", fontWeight = FontWeight.Bold)
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                onClick = {
+                    val api = ApiService()
+                    val ref = api.makePayment(
+                        totalAmount = grandTotal.toInt(),
+                        totalItems = items.sumOf { it.quantity },
+                        cartItems = items
+                    )
+                    if (ref != null) {
+                        CartManager.clear()
+                        items.clear()
+
+                        scope.launch {
+                            snackbarHostState.showSnackbar("🎉 Hurray! Order placed successfully")
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+            ) {
+                Text("Place Order", color = Color.White)
+            }
         }
     }
 }
