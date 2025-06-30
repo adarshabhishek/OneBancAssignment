@@ -13,15 +13,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
+import androidx.navigation.NavController
 import com.example.onebancrestaurantapp.data.model.Cuisine
 import com.example.onebancrestaurantapp.data.model.Dish
+import com.example.onebancrestaurantapp.data.model.CartItem
 import com.example.onebancrestaurantapp.data.remote.ApiService
+import com.example.onebancrestaurantapp.presentation.navigation.Screen
+import com.example.onebancrestaurantapp.utils.CartManager
 import com.example.onebancrestaurantapp.utils.rememberImagePainter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 @Composable
-fun CuisineScreen(cuisineId: String) {
+fun CuisineScreen(cuisineId: String, navController: NavController? = null) {
     var cuisine by remember { mutableStateOf<Cuisine?>(null) }
     val quantities = remember { mutableStateMapOf<String, Int>() }
 
@@ -34,6 +38,8 @@ fun CuisineScreen(cuisineId: String) {
     }
 
     cuisine?.let { selectedCuisine ->
+        val hasItemsInCart = quantities.values.sum() > 0
+
         Column(modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)) {
@@ -46,13 +52,41 @@ fun CuisineScreen(cuisineId: String) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            LazyColumn {
+            LazyColumn(modifier = Modifier.weight(1f)) {
                 items(selectedCuisine.items) { dish ->
                     DishQuantityCard(dish, quantities[dish.id] ?: 0) { change ->
                         val current = quantities[dish.id] ?: 0
                         val updated = (current + change).coerceAtLeast(0)
                         quantities[dish.id] = updated
+
+                        // Update CartManager
+                        if (updated > 0) {
+                            CartManager.addItem(
+                                CartItem(
+                                    cuisineId = selectedCuisine.cuisineId,
+                                    itemId = dish.id,
+                                    name = dish.name,
+                                    price = dish.price,
+                                    quantity = 1,
+                                    imageUrl = dish.imageUrl
+                                )
+                            )
+                        } else {
+                            CartManager.removeItem(dish.id)
+                        }
                     }
+                }
+            }
+
+            if (hasItemsInCart && navController != null) {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = { navController.navigate(Screen.Cart.route) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF009688))
+                ) {
+                    Text("Go to Cart", color = Color.White)
                 }
             }
         }
@@ -100,14 +134,14 @@ fun DishQuantityCard(dish: Dish, quantity: Int, onQuantityChange: (Int) -> Unit)
                 horizontalArrangement = Arrangement.End
             ) {
                 Button(onClick = { onQuantityChange(-1) }, enabled = quantity > 0) {
-                    Text(text = "-")
+                    Text("-")
                 }
                 Text(
                     text = quantity.toString(),
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
                 Button(onClick = { onQuantityChange(1) }) {
-                    Text(text = "+")
+                    Text("+")
                 }
             }
         }
