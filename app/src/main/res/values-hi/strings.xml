@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">वनबैंक रेस्तरां</string>
+    <string name="cuisine_categories">खानपान श्रेणियाँ</string>
+    <string name="top_dishes">शीर्ष 3 व्यंजन</string>
+</resources>

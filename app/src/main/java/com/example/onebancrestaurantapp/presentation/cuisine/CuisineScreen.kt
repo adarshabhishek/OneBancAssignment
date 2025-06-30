@@ -1,0 +1,115 @@
+package com.example.onebancrestaurantapp.presentation.cuisine
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.*
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.*
+import com.example.onebancrestaurantapp.data.model.Cuisine
+import com.example.onebancrestaurantapp.data.model.Dish
+import com.example.onebancrestaurantapp.data.remote.ApiService
+import com.example.onebancrestaurantapp.utils.rememberImagePainter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+@Composable
+fun CuisineScreen(cuisineId: String) {
+    var cuisine by remember { mutableStateOf<Cuisine?>(null) }
+    val quantities = remember { mutableStateMapOf<String, Int>() }
+
+    LaunchedEffect(cuisineId) {
+        cuisine = withContext(Dispatchers.IO) {
+            val api = ApiService()
+            val cuisines = api.getItemList(1, 10)
+            cuisines.find { it.cuisineId == cuisineId }
+        }
+    }
+
+    cuisine?.let { selectedCuisine ->
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)) {
+
+            Text(
+                text = selectedCuisine.cuisineName,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            LazyColumn {
+                items(selectedCuisine.items) { dish ->
+                    DishQuantityCard(dish, quantities[dish.id] ?: 0) { change ->
+                        val current = quantities[dish.id] ?: 0
+                        val updated = (current + change).coerceAtLeast(0)
+                        quantities[dish.id] = updated
+                    }
+                }
+            }
+        }
+    } ?: Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator()
+    }
+}
+
+@Composable
+fun DishQuantityCard(dish: Dish, quantity: Int, onQuantityChange: (Int) -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Row(modifier = Modifier.padding(12.dp)) {
+            val painter = rememberImagePainter(dish.imageUrl)
+
+            if (painter != null) {
+                Image(
+                    painter = painter,
+                    contentDescription = dish.name,
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = dish.name, fontWeight = FontWeight.SemiBold)
+                Text(text = "₹${dish.price}", color = Color.Gray)
+                Text(text = "⭐ ${dish.rating}")
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End
+            ) {
+                Button(onClick = { onQuantityChange(-1) }, enabled = quantity > 0) {
+                    Text(text = "-")
+                }
+                Text(
+                    text = quantity.toString(),
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+                Button(onClick = { onQuantityChange(1) }) {
+                    Text(text = "+")
+                }
+            }
+        }
+    }
+}

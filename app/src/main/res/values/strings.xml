@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">OneBancRestaurantApp</string>
+    <string name="cuisine_categories">Cuisine Categories</string>
+    <string name="top_dishes">Top 3 Dishes</string>
+</resources>
