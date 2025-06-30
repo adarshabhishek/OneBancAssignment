@@ -13,6 +13,12 @@ object CartManager {
             cartItems.add(item)
         }
     }
+    fun updateItem(updatedItem: CartItem) {
+        val existingIndex = cartItems.indexOfFirst { it.itemId == updatedItem.itemId }
+        if (existingIndex != -1) {
+            cartItems[existingIndex] = updatedItem
+        }
+    }
 
     fun removeItem(itemId: String) {
         cartItems.removeAll { it.itemId == itemId }
