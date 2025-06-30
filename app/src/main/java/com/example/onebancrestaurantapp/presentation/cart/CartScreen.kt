@@ -1,5 +1,6 @@
 package com.example.onebancrestaurantapp.presentation.cart
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,25 +12,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.onebancrestaurantapp.data.model.CartItem
 import com.example.onebancrestaurantapp.data.remote.ApiService
+import com.example.onebancrestaurantapp.presentation.navigation.Screen
 import com.example.onebancrestaurantapp.utils.CartManager
 import com.example.onebancrestaurantapp.utils.rememberImagePainter
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @Composable
-fun CartScreen() {
+fun CartScreen(navController: NavController) {
     val items = remember { mutableStateListOf<CartItem>() }
+    var showBackHome by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         items.clear()
         items.addAll(CartManager.getItems())
     }
 
+    val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -48,89 +52,91 @@ fun CartScreen() {
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
-            Text(
-                "Your Cart",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-
+            Text("Your Cart", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(16.dp))
 
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                items(items.size) { index ->
-                    CartItemRow(
-                        item = items[index],
-                        onQuantityChange = { newQty ->
-                            val currentItem = items[index]
+            if (items.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("🛒 Cart is empty", style = MaterialTheme.typography.bodyLarge)
+                }
+            } else {
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    items(items.size) { index ->
+                        CartItemRow(
+                            item = items[index],
+                            onQuantityChange = { newQty ->
+                                val currentItem = items[index]
+                                if (newQty > 0) {
+                                    val updated = currentItem.copy(quantity = newQty)
+                                    items[index] = updated
+                                    CartManager.updateItem(updated)
+                                } else {
+                                    items.removeAt(index)
+                                    CartManager.removeItem(currentItem.itemId)
+                                }
+                            }
+                        )
+                    }
+                }
 
-                            if (newQty > 0) {
-                                val updatedItem = currentItem.copy(quantity = newQty)
-                                items[index] = updatedItem
-                                CartManager.updateItem(updatedItem)
+                Spacer(modifier = Modifier.height(16.dp))
+                Divider()
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text("Subtotal: ₹$netTotal")
+                Text("CGST (2.5%): ₹${cgst.toInt()}")
+                Text("SGST (2.5%): ₹${sgst.toInt()}")
+                Text("Grand Total: ₹${grandTotal.toInt()}", fontWeight = FontWeight.Bold)
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Button(
+                    onClick = {
+                        scope.launch {
+                            if (items.isEmpty()) {
+                                snackbarHostState.showSnackbar("🛒 Your cart is empty")
+                                return@launch
+                            }
+
+                            // Simulated success
+                            val api = ApiService()
+                            val ref = api.makePayment(
+                                totalItems = items.sumOf { it.quantity },
+                                cartItems = items
+                            )
+
+                            if (ref != null) {
+                                Toast.makeText(context, "✅ Order placed successfully", Toast.LENGTH_SHORT).show()
+                                CartManager.clear()
+                                items.clear()
+                                showBackHome = true
                             } else {
-                                items.removeAt(index)
-                                CartManager.removeItem(currentItem.itemId)
+                                snackbarHostState.showSnackbar("❌ Failed to place order")
                             }
                         }
-                    )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                ) {
+                    Text("Place Order", color = Color.White)
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-            Divider()
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text("Subtotal: ₹$netTotal")
-            Text("CGST (2.5%): ₹${cgst.toInt()}")
-            Text("SGST (2.5%): ₹${sgst.toInt()}")
-            Text("Grand Total: ₹${grandTotal.toInt()}", fontWeight = FontWeight.Bold)
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(
-                onClick = {
-                    scope.launch {
-                        if (items.isEmpty()) {
-                            snackbarHostState.showSnackbar(
-                                message = "🛒 Your cart is empty",
-                                duration = SnackbarDuration.Short
-                            )
-                            return@launch
-                        }
-
-                        val api = ApiService()
-                        val ref = withContext(Dispatchers.IO) {
-                            try {
-                                api.makePayment(
-                                    totalAmount = grandTotal.toInt(),
-                                    totalItems = items.sumOf { it.quantity },
-                                    cartItems = items
-                                )
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                                null
-                            }
-                        }
-
-                        if (ref != null) {
-                            CartManager.clear()
-                            items.clear()
-                            snackbarHostState.showSnackbar(
-                                message = "🎉 Order placed successfully",
-                                duration = SnackbarDuration.Short
-                            )
-                        } else {
-                            snackbarHostState.showSnackbar(
-                                message = "❌ Failed to place order",
-                                duration = SnackbarDuration.Short
-                            )
-                        }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
-            ) {
-                Text("Place Order", color = Color.White)
+            // ✅ Show Back to Home button even when cart is empty
+            if (showBackHome) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = { navController.navigate(Screen.Home.route) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF009688))
+                ) {
+                    Text("🏠 Go to Home Screen", color = Color.White)
+                }
             }
         }
     }

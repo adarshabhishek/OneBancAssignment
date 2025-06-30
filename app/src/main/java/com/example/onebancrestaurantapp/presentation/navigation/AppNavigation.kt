@@ -35,7 +35,7 @@ fun AppNavigation(navController: NavHostController, homeViewModel: HomeViewModel
 
         }
         composable(Screen.Cart.route) {
-            CartScreen()
+            CartScreen(navController = navController)
         }
 
     }
